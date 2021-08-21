@@ -3,9 +3,13 @@
 #include "v8.h"
 #include <thread>
 
+#define TEST_ISOLATE_THREAD 1
+#define TEST_CONTEXT_THREAD 1
 
 void test_context(v8::Isolate* isolate) {
+#if TEST_CONTEXT_THREAD
   v8::Locker locker(isolate);
+#endif
   v8::Isolate::Scope isolate_scope(isolate);
 
   // Create a stack-allocated handle scope.
@@ -41,7 +45,15 @@ void test_isolate() {
   create_params.array_buffer_allocator =
       v8::ArrayBuffer::Allocator::NewDefaultAllocator();
   v8::Isolate* isolate = v8::Isolate::New(create_params);
+
+#if TEST_CONTEXT_THREAD
+  std::thread t1(test_context, isolate);
+  std::thread t2(test_context, isolate);
+  t1.join();
+  t2.join();
+#else
   test_context(isolate);
+#endif
 
   // Dispose the isolate and tear down V8.
   isolate->Dispose();
@@ -52,8 +64,15 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<v8::Platform> platform = v8::platform::NewDefaultPlatform();
   v8::V8::InitializePlatform(platform.get());
   v8::V8::Initialize();
-  
+
+#if TEST_ISOLATE_THREAD
+  std::thread t1(test_isolate);
+  std::thread t2(test_isolate);
+  t1.join();
+  t2.join();
+#else
   test_isolate(); 
+#endif
 
   v8::V8::Dispose();
   v8::V8::ShutdownPlatform();

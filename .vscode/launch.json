@@ -14,7 +14,10 @@
 			"cwd": "${fileDirname}",
 			"environment": [],
 			"externalConsole": false,
-			"MIMode": "lldb"
+			"MIMode": "lldb",
+			"sourceFileMap":{
+				"../..": "${workspaceFolder}/../v8/v8"
+			}
 		}
 	]
 }
